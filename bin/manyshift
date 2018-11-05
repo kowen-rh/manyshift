@@ -1,0 +1,159 @@
+#!/usr/bin/env sh
+
+set -e
+
+MANYSHIFT_VERSION='1.0.0'
+MANYSHIFT_ROOT="$HOME/.manyshift"
+MANYSHIFT_CURRENT="$MANYSHIFT_ROOT/current"
+
+case "$(uname -s)" in
+  Linux)
+    OS='linux'
+    ARCHIVE_TYPE='tgz'
+    ;;
+  Darwin)
+    OS='darwin'
+    ARCHIVE_TYPE='tgz'
+    ;;
+  *)
+    OS='windows'
+    ARCHIVE_TYPE='zip'
+    ;;
+esac
+
+print_usage() {
+  echo "$(basename "$0") [command] [args...]"
+  echo
+  echo "Commands: init, add, rm, ls, use, which"
+}
+
+install_versions() {
+  setup
+  for version in "$@" ; do
+    if [ "$version" = 'latest' ] ; then
+      url="https://api.github.com/repos/minishift/minishift/releases/latest"
+      url=$(
+        curl -s "$url" |
+        awk "/$OS-amd64.$ARCHIVE_TYPE\"\$/ { print \$2 }"
+      )
+      url=$(echo "$url" | tr -d '"')
+    else
+      url="https://github.com/minishift/minishift/releases/download"
+      url="$url/v$version/minishift-$version-$OS-amd64.$ARCHIVE_TYPE"
+    fi
+    
+    if [ "$ARCHIVE_TYPE" = 'tgz' ] ; then
+      curl -sL "$url" | tar -xz -C "$MANYSHIFT_ROOT"
+    else
+      # `unzip` does not support reading from stdin, so we use a temp file.
+      curl -sL "$url" -o "$MANYSHIFT_ROOT/tmp.zip"
+      unzip -qqx "$MANYSHIFT_ROOT/tmp.zip" -d "$MANYSHIFT_ROOT"
+      rm "$MANYSHIFT_ROOT/tmp.zip"
+    fi
+  done
+}
+
+uninstall_versions() {
+  setup
+  for version in "$@" ; do
+    rm -rf "$MANYSHIFT_ROOT/minishift-$version-$OS-amd64"
+    if [ "$version" = "$(current_version)" ] ; then
+      # Reset the current version to none.
+      use_version
+    fi
+  done
+}
+
+list_versions() {
+  setup
+  for dir in $(ls -1 "$MANYSHIFT_ROOT") ; do
+    if [ -d "$MANYSHIFT_ROOT/$dir" ] && [ "$dir" != 'bin' ] ; then
+      active=''
+      if [ "$(converted_version "$dir")" = "$(current_version)" ] ; then
+        active=' (active)'
+      fi
+      echo "$(converted_version "$dir")$active"
+    fi
+  done
+}
+
+converted_version() {
+  printf '%s' "$(echo "$1" | awk -F '-' '{ print $2 }')"
+}
+
+current_version() {
+  setup
+  version="$(cat "$MANYSHIFT_CURRENT")"
+  if [ -n "$version" ] ; then
+    converted_version "$version"
+  fi
+}
+
+use_version() {
+  setup
+  if [ -n "$1" ] ; then
+    echo "minishift-$1-$OS-amd64" > "$MANYSHIFT_CURRENT"
+  else
+    echo > "$MANYSHIFT_CURRENT"
+  fi
+}
+
+setup() {
+  mkdir -p "$MANYSHIFT_ROOT/bin"
+  touch "$MANYSHIFT_CURRENT"
+  
+  bin="$MANYSHIFT_ROOT/bin/minishift"
+  if [ ! -x "$bin" ] ; then
+    cat << 'EOF' > "$bin"
+#!/usr/bin/env sh
+
+version="$(cat $HOME/.manyshift/current)"
+
+if [ -z "$version" ] ; then
+  echo "manyshift: no Minishift version to use" 1>&2
+  exit 1
+fi
+
+export MINISHIFT_HOME="$HOME/.manyshift/$version"
+exec "$MINISHIFT_HOME/minishift" "$@"
+EOF
+    chmod +x "$bin"
+  fi
+}
+
+main() {
+  case "$1" in
+    add|install)
+      shift
+      install_versions "$@"
+      ;;
+    rm|remove|uninstall)
+      shift
+      uninstall_versions "$@"
+      ;;
+    ls|list|versions)
+      list_versions
+      ;;
+    use|set)
+      shift
+      use_version "$1"
+      ;;
+    which|active|current)
+      if [ -n "$(current_version)" ] ; then
+        echo "$(current_version)"
+      fi
+      ;;
+    -v|--version|version)
+      echo "$(basename "$0") v$MANYSHIFT_VERSION"
+      ;;
+    -h|--help|help)
+      print_usage
+      ;;
+    *)
+      print_usage 1>&2
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"

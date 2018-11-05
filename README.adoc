@@ -1,0 +1,195 @@
+:project: Manyshift
+:script: manyshift
+
+[[manyshift]]
+= {project}
+:toc: macro
+:toc-title:
+:toclevels: 2
+
+{project} is a POSIX-compliant shell script designed to allow you to easily install, manage, and run multiple versions of link:https://github.com/minishift/minishift[Minishift].
+
+toc::[]
+
+[[installing]]
+== Installing {project}
+
+[NOTE]
+====
+* {project} is a portable, POSIX-compliant shell script.
+The included `{script}` script should run in any POSIX-compliant shell.
+* {project} has been developed and tested on Fedora GNU/Linux.
+====
+
+[[installing-linux]]
+=== On GNU/Linux
+
+. link:https://github.com/robin-owen/manyshift/releases/latest[Download the latest version of {project}].
+
+. Place `{script}` in your `$PATH`.
+The **_~/bin_** directory is recommended.
+
+. Add **_~/.manyshift/bin_** to your `$PATH`.
+In Bash, run the following command to add **_~/.manyshift/bin_** to your `$PATH`:
++
+----
+$ echo 'export PATH="$HOME/.manyshift/bin:$PATH"' > ~/.bashrc
+----
+
+. Start a new shell instance.
+
+[[using]]
+== Using {project}
+
+[[using-installing-versions]]
+=== Installing versions
+
+Use the `{script} add` command to install the given versions of Minishift.
+You may supply multiple versions as arguments to the `{script} add` command.
+
+[NOTE]
+====
+* The `add` command includes access to the `latest` version string.
+Using the `latest` version string will automatically download and install the most recent release of Minishift.
+* This is the only command that includes the `latest` version string.
+====
+
+Example:
+
+[subs="attributes"]
+----
+$ {script} add latest 1.25.0 1.13.0
+----
+
+[NOTE]
+====
+The `{script} add` command is also aliased as `{script} install`.
+====
+
+[[using-setting-active-version]]
+=== Setting the active version
+
+The active Minishift version used by {project} may be set with the `{script} use` command.
+The `{script} use` command expects to be given the desired version string as an argument.
+
+Example:
+
+[subs="attributes"]
+----
+$ {script} use 1.26.1
+----
+
+You may clear the active version by using the `{script} use` command without arguments.
+
+Example:
+
+[subs="attributes"]
+----
+$ {script} use
+----
+
+[IMPORTANT]
+====
+* The `{script} use` command does not manage Minishift profiles.
+Use the `minishift profile set` command to ensure that there are no conflicts between profiles and Minishift versions.
+Including the version number in the profile name is recommended.
++
+Example:
++
+[subs="attributes"]
+----
+$ {script} use 1.26.1
+$ minishift profile set minishift-1-26-1
+----
+====
+
+[NOTE]
+====
+The `{script} use` command is also aliased as `{script} set`.
+====
+
+[[using-displaying-active-version]]
+=== Displaying the active version
+
+Use the `{script} which` command to display which version is currently active.
+
+Example:
+
+[subs="attributes"]
+----
+$ {script} which
+1.26.1
+----
+
+[NOTE]
+====
+The `{script} which` command is also aliased as `{script} active` and `{script} current`.
+====
+
+[[using-listing-installed-versions]]
+=== Listing installed versions
+
+Use the `{script} ls` command to list the currently installed Minishift versions managed by {project}.
+The currently active version is displayed as "`(active)`".
+
+Example:
+
+[subs="attributes"]
+----
+$ {script} ls
+1.13.0
+1.25.0
+1.26.1 (active)
+----
+
+[NOTE]
+====
+The `{script} ls` command is also aliased as `{script} list` and `{script} versions`.
+====
+
+[[using-removing-installed-versions]]
+=== Removing installed versions
+
+Minishift versions managed by {project} can be removed with the `{script} rm` command.
+You may supply multiple versions as arguments to the `{script} rm` command.
+
+Example:
+
+[subs="attributes"]
+----
+$ {script} rm 1.13.0 1.25.0
+----
+
+[IMPORTANT]
+====
+* Removing the currently active version will remove the active version setting.
+You will need to run the `{script} use` command to set a new active version.
+* Removing a Minishift version does not remove the profiles or virtual machines associated with that Minishift version.
+Ensure that you have removed these artifacts via Minishift before running the `{script} rm` command.
++
+Example:
++
+[subs="attributes"]
+----
+$ {script} which
+1.26.1
+$ for profile in $(minishift profile list | awk '{ print $2 }') ; do
+  minishift profile delete "$profile"
+done
+$ {script} rm 1.26.1
+----
+====
+
+[NOTE]
+====
+The `{script} rm` command is also aliased as `{script} remove` and `{script} uninstall`.
+====
+
+[[contributing]]
+== Contributing to {project}
+
+[[contributing-license]]
+=== License
+
+{project} is made available under the terms of the MIT Expat license.
+See the included **_LICENSE_** file for more information.
