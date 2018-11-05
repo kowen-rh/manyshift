@@ -3,7 +3,7 @@
 set -e
 
 MANYSHIFT_VERSION='1.0.0'
-MANYSHIFT_ROOT="$HOME/.manyshift"
+MANYSHIFT_ROOT=${MANYSHIFT_ROOT:="$HOME/.manyshift"}
 MANYSHIFT_CURRENT="$MANYSHIFT_ROOT/current"
 
 case "$(uname -s)" in
@@ -24,7 +24,7 @@ esac
 print_usage() {
   echo "$(basename "$0") [command] [args...]"
   echo
-  echo "Commands: init, add, rm, ls, use, which"
+  echo "Commands: add, rm, ls, use, which"
 }
 
 install_versions() {
