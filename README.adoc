@@ -33,7 +33,7 @@ The **_~/bin_** directory is recommended.
 In Bash, run the following command to add **_~/.manyshift/bin_** to your `$PATH`:
 +
 ----
-$ echo 'export PATH="$HOME/.manyshift/bin:$PATH"' > ~/.bashrc
+$ echo 'export PATH="$HOME/.manyshift/bin:$PATH"' >> ~/.bashrc
 ----
 
 . Start a new shell instance.
