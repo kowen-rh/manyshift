@@ -6,14 +6,14 @@ MANYSHIFT_VERSION='1.0.0'
 MANYSHIFT_ROOT=${MANYSHIFT_ROOT:="$HOME/.manyshift"}
 MANYSHIFT_CURRENT="$MANYSHIFT_ROOT/current"
 
+ARCHIVE_TYPE='tgz'
+
 case "$(uname -s)" in
   Linux)
     OS='linux'
-    ARCHIVE_TYPE='tgz'
     ;;
   Darwin)
     OS='darwin'
-    ARCHIVE_TYPE='tgz'
     ;;
   *)
     OS='windows'
@@ -92,10 +92,11 @@ current_version() {
 use_version() {
   setup
   if [ -n "$1" ] ; then
-    echo "minishift-$1-$OS-amd64" > "$MANYSHIFT_CURRENT"
+    version="minishift-$1-$OS-amd64"
   else
-    echo > "$MANYSHIFT_CURRENT"
+    version=''
   fi
+  echo "$version" > "$MANYSHIFT_CURRENT"
 }
 
 setup() {
