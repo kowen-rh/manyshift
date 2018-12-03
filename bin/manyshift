@@ -110,13 +110,20 @@ setup() {
 
 version="$(cat $HOME/.manyshift/current)"
 
-if [ -z "$version" ] ; then
-  echo "manyshift: no Minishift version to use" 1>&2
+report_error() {
+  echo "manyshift: $@" 1>&2
   exit 1
-fi
+}
 
-export MINISHIFT_HOME="$HOME/.manyshift/$version"
-exec "$MINISHIFT_HOME/minishift" "$@"
+[ -z "$version" ] && report_error "no Minishift version to use"
+
+if [ -d "$HOME/.manyshift/$version" ] ; then
+  mkdir -p "$HOME/.manyshift/$version/home"
+  export MINISHIFT_HOME="$HOME/.manyshift/$version/home"
+  exec "$HOME/.manyshift/$version/minishift" "$@"
+else
+  report_error "the requested Minishift version is not installed"
+fi
 EOF
     chmod +x "$bin"
   fi
